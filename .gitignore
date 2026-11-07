@@ -1,0 +1,8 @@
+# Python bytecode from the helper scripts
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor and OS noise
+*.swp
+.DS_Store

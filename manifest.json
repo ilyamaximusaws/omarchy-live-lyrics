@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "angelos.lyrics",
+  "name": "Live Lyrics",
+  "version": "1.0.0",
+  "author": "Iliya Brook",
+  "license": "MIT",
+  "repository": "https://github.com/ilyamaximusaws/omarchy-live-lyrics",
+  "description": "Live synchronized lyrics in your bar: character-by-character reveal, word-by-word karaoke, beat alignment grid, and loudness glow. A port of the angelOS lyrics bar and engine by MixaDoDs (MIT).",
+  "kinds": [
+    "bar-widget",
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "barWidget": "LyricsBarWidget.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Live Lyrics",
+    "description": "Synchronized live lyrics for current MPRIS track",
+    "category": "Audio",
+    "allowMultiple": false,
+    "defaultSection": "center",
+    "defaults": {
+      "byWord": true,
+      "onBeat": true,
+      "glow": "level",
+      "preferPlayer": "",
+      "artwork": "cover",
+      "opacity": 100,
+      "maxWidth": 500
+    },
+    "schema": [
+      {
+        "key": "byWord",
+        "type": "boolean",
+        "label": "Word-by-word karaoke",
+        "description": "Animate word by word when available in LRC/sync data.",
+        "defaultValue": true
+      },
+      {
+        "key": "onBeat",
+        "type": "boolean",
+        "label": "Beat sync",
+        "description": "Align word timings to detected audio beat grid (osu-beats).",
+        "defaultValue": true
+      },
+      {
+        "key": "glow",
+        "type": "string",
+        "label": "Text glow effect",
+        "description": "Glow mode: level (volume level) or off.",
+        "defaultValue": "level",
+        "options": ["level", "off"]
+      },
+      {
+        "key": "preferPlayer",
+        "type": "string",
+        "label": "Preferred MPRIS player",
+        "description": "Substring of player identity/desktop name to prefer.",
+        "defaultValue": ""
+      },
+      {
+        "key": "artwork",
+        "type": "string",
+        "label": "What sits left of the line",
+        "description": "Album cover from the player, or the note icon.",
+        "defaultValue": "cover",
+        "options": ["cover", "note"]
+      },
+      {
+        "key": "opacity",
+        "type": "integer",
+        "label": "Opacity (%)",
+        "description": "How solid the lyric line sits in the bar.",
+        "min": 20,
+        "max": 100,
+        "step": 5,
+        "defaultValue": 100
+      },
+      {
+        "key": "maxWidth",
+        "type": "integer",
+        "label": "Max line width (px)",
+        "description": "How wide a lyric line may get before it glides sideways.",
+        "min": 120,
+        "max": 1200,
+        "step": 20,
+        "defaultValue": 500
+      }
+    ]
+  }
+}

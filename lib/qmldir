@@ -1,0 +1,11 @@
+module angelos.lyrics.lib
+singleton Config 1.0 Config.qml
+singleton Audio 1.0 Audio.qml
+singleton I18n 1.0 I18n.qml
+singleton Paths 1.0 Paths.qml
+singleton Session 1.0 Session.qml
+singleton Halo 1.0 Halo.qml
+singleton Lyrics 1.0 Lyrics.qml
+singleton LyricsGlow 1.0 LyricsGlow.qml
+singleton LyricsBeat 1.0 LyricsBeat.qml
+AsyncFile 1.0 AsyncFile.qml
