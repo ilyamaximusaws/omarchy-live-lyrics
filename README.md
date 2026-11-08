@@ -36,11 +36,9 @@ what was changed, and what is not bundled.
   cover art. Without them the plugin still shows synced lyrics line by line.
   See [`THIRD-PARTY.md`](THIRD-PARTY.md#runtime-dependencies-not-bundled).
 
-On Arch, the optional pieces are:
-
-```bash
-sudo pacman -S python-numpy cava pipewire curl
-```
+On Arch the optional pieces come from the `extra` repository: `python-numpy`,
+`cava`, `pipewire` and `curl`. Install them with your usual package manager —
+the plugin never runs package management itself.
 
 ## Install
 
