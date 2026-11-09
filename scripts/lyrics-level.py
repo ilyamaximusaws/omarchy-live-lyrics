@@ -64,6 +64,17 @@ def say(obj):
     sys.stdout.flush()
 
 
+def die_with_parent():
+    # pw-record never outlives this script (a killed probe must not leave a
+    # capture node behind; SIGPIPE from the closed stdout pipe is only a
+    # fallback that fires on the first write after the death)
+    try:
+        import ctypes
+        ctypes.CDLL(None).prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG
+    except (OSError, AttributeError):
+        pass
+
+
 def capture(target, channels, positions, rate, name, passive=True):
     if not shutil.which("pw-record"):
         say({"error": "pw-record not found (pipewire-tools)"})
@@ -77,7 +88,8 @@ def capture(target, channels, positions, rate, name, passive=True):
     if positions:
         cmd += ["--channel-map", ",".join(positions)]
     cmd.append("-")
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0)
+    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=0,
+                            preexec_fn=die_with_parent)
 
 
 def db(x):

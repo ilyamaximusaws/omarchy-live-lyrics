@@ -168,7 +168,9 @@ Singleton {
         return Math.max(0, Math.min(1, (d + 20 * Math.log(vol) / Math.LN10 - lo) / Math.max(1, hi - lo)));
     }
     property real levelDb: NaN
-    readonly property bool hearWanted: Lib.Config.lyrics.glow !== "off" && Lib.Lyrics.playing && streamSerial !== "" && !(effective === "level" && probe.running)
+    // hear exists for the line's glow: with no lyrics shown there is nothing to
+    // brighten, so the capture stops too (a fallback title needs no level)
+    readonly property bool hearWanted: Lib.Config.lyrics.glow !== "off" && Lib.Lyrics.hasLyrics && Lib.Lyrics.playing && streamSerial !== "" && !(effective === "level" && probe.running)
     onHearWantedChanged: hear.running = hearWanted
     onStreamSerialChanged: {
         levelDb = NaN;

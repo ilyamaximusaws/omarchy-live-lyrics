@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "angelos.lyrics",
   "name": "Live Lyrics",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Iliya Brook",
   "license": "MIT",
   "repository": "https://github.com/ilyamaximusaws/omarchy-live-lyrics",
@@ -25,6 +25,7 @@
     "defaults": {
       "byWord": true,
       "onBeat": true,
+      "fallbackTitle": true,
       "glow": "level",
       "preferPlayer": "",
       "artwork": "cover",
@@ -44,6 +45,13 @@
         "type": "boolean",
         "label": "Beat sync",
         "description": "Align word timings to detected audio beat grid (osu-beats).",
+        "defaultValue": true
+      },
+      {
+        "key": "fallbackTitle",
+        "type": "boolean",
+        "label": "Title when there are no lyrics",
+        "description": "While music plays without synced lyrics, show the track title and cover instead of hiding the widget.",
         "defaultValue": true
       },
       {

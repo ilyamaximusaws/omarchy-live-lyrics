@@ -63,9 +63,29 @@ BarWidget {
     }
 
     // ---- what to show --------------------------------------------------------
-    readonly property bool active: Lib.Config.lyrics.enabled && lyr.hasLyrics && lyr.visibleToggle
-    readonly property string line: lyr.current !== "" ? lyr.current : "\u266a ~ \u266a"
-    readonly property bool singing: lyr.current !== "" && lyr.playing
+    // With no synced lyrics to sing (not found, instrumental, still loading) the
+    // widget falls back to the track's own name beside the cover instead of
+    // leaving the bar silent. The audio probes agree: LyricsBeat needs word
+    // timings, and LyricsGlow gates its captures on hasLyrics.
+    readonly property bool fallbackTitle: setting("fallbackTitle", true)
+    readonly property string fallbackLine: {
+        // the engine's cleaned pair: "Artist - Title (Official Audio)" from a
+        // browser arrives as a proper artist and a bare title
+        const c = lyr.cleaned
+        const t = String(c && c.title || "")
+        const a = String(c && c.artist || "")
+        if (!t)
+            return ""
+        if (!a)
+            return t
+        return t.toLowerCase().includes(a.toLowerCase()) ? t : a + " — " + t
+    }
+    readonly property bool showingFallback: fallbackTitle && !lyr.hasLyrics && fallbackLine !== ""
+    readonly property bool active: Lib.Config.lyrics.enabled && lyr.visibleToggle
+        && (lyr.hasLyrics || (lyr.playing && showingFallback))
+    readonly property string line: lyr.current !== "" ? lyr.current
+        : showingFallback ? fallbackLine : "\u266a ~ \u266a"
+    readonly property bool singing: lyr.playing && (lyr.current !== "" || showingFallback)
 
     // ---- settings ------------------------------------------------------------
     readonly property string artwork: setting("artwork", "cover")   // "cover" | "note"
@@ -215,6 +235,18 @@ BarWidget {
                 slide.restart()
             if (typed >= shown.length)
                 startGlide()
+            return
+        }
+        if (showingFallback) {
+            // a title is not sung: it arrives whole, and a too-long one glides
+            // once — the typewriter's end-of-line scroll would park it tail-first
+            typer.stop()
+            freshIn.stop()
+            typed = shown.length
+            settled = typed
+            if (visible)
+                slide.restart()
+            startGlide()
             return
         }
         if (!visible) {
