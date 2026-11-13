@@ -123,6 +123,27 @@ ShellRoot {
            Array.isArray(menu) && menu.length === 3 && menu[0].label.length > 0,
            JSON.stringify(menu.map(function (m) { return m.label })))
 
+        // ---- a messenger must never be followed over a real player, and its metadata must
+        // never leave the machine on its own ----
+        var music = { "identity": "Spotify", "desktopEntry": "spotify", "isPlaying": false,
+                      "trackTitle": "Creep", "trackArtist": "Radiohead" }
+        var voice = { "identity": "Telegram Desktop", "desktopEntry": "org.telegram.desktop",
+                      "isPlaying": true, "trackTitle": "Iliya Brook", "trackArtist": "14:32" }
+        ok("a messenger is recognised", lyr.isMessenger(voice) === true && lyr.isMessenger(music) === false,
+           "voice=" + lyr.isMessenger(voice) + " music=" + lyr.isMessenger(music))
+        ok("a messenger never outscores a real player",
+           lyr.playerScore(voice, "") < lyr.playerScore(music, ""),
+           "voice=" + lyr.playerScore(voice, "") + " < music=" + lyr.playerScore(music, ""))
+        ok("but a messenger still scores above nothing",
+           lyr.playerScore(voice, "") > -1000,
+           "voice=" + lyr.playerScore(voice, ""))
+        ok("an explicit preferPlayer still wins over the demotion",
+           lyr.playerScore(voice, "telegram") > lyr.playerScore(music, ""),
+           "pref voice=" + lyr.playerScore(voice, "telegram") + " > music=" + lyr.playerScore(music, ""))
+        // the gate itself is on the live player (netBlocked); its pieces hold without one
+        ok("a non-messenger never blocks the network",
+           lyr.isMessenger(null) === false, "isMessenger(null)=" + lyr.isMessenger(null))
+
         // ---- a real source: lrclib over the network ----
         lyr.http("https://lrclib.net/api/search?q=radiohead+creep", function (code, body) {
             ok("lrclib status 200", code === 200 && Array.isArray(body), "hits=" + (body ? body.length : 0))

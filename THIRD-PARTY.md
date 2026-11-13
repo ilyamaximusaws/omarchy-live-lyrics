@@ -21,6 +21,10 @@ Both are covered by MIT; the full text with both copyright lines is in
 - The bar item became an Omarchy `BarWidget`; the angelOS halo/panel surfaces,
   fonts and themes were not ported.
 - The player popup (cover, title, transport, opacity setting) was added here.
+- Messenger MPRIS entries (voice messages) were isolated: they never win the
+  followed player over a real one, and their sender-name / timestamp metadata is
+  sent to the lyrics services only on the user's explicit request, never
+  automatically.
 
 ## What this plugin does not ship
 

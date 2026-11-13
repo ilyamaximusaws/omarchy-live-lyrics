@@ -63,15 +63,35 @@ Singleton {
         })
     onPlayerChanged: _followed.player = player
     readonly property var musicApps: /spotify|yandex|vk ?music|vkmusic|deezer|tidal|apple ?music|cider|amberol|rhythmbox|elisa|strawberry|clementine|audacious|lollypop|quodlibet|cmus|mpd|ncspot|spotube|feishin|sonixd|supersonic|youtube.?music|ytmusic|soundcloud|nuclear|harmonoid|tauon|g4music|gapless|euphonica|musikcube|deadbeef|foobar|museeks|kew|termusic|plexamp|jellyfin|navidrome|psst|sayonara|mpv|vlc|celluloid|haruna/i
-    readonly property var notMusic: /telegram|discord|zoom|skype|teams|whatsapp|signal|slack|element|obs|kdeconnect|gsconnect|steam|nautilus|strata|gwenview|loupe/i
+    // What a messenger publishes over MPRIS is not a track: the "artist" of a voice message is
+    // the sender's name and its "title" the time it was sent, and a call has neither. Such a
+    // player never takes the song from a real one, and its metadata never leaves the machine on
+    // its own (see `netBlocked` below).
+    readonly property var messengers: /discord|vesktop|telegram|signal|element|slack|whatsapp|threema|skype|teams|zoom/i
+    // still not a song, but nothing private: an image viewer, a file manager, a game
+    readonly property var notMusic: /obs|kdeconnect|gsconnect|steam|nautilus|strata|gwenview|loupe/i
+    function playerIdentity(p) {
+        return (p.identity || "") + " " + (p.desktopEntry || "") + " " + (p.dbusName || "");
+    }
+    function isMessenger(p) {
+        return !!p && messengers.test(playerIdentity(p));
+    }
     function playerScore(p, pref) {
-        const id = (p.identity || "") + " " + (p.desktopEntry || "") + " " + (p.dbusName || "");
+        const id = playerIdentity(p);
         let s = 0;
+        const wants = pref && id.toLowerCase().includes(pref);
         if (p.isPlaying)
             s += 100;
-        if (pref && id.toLowerCase().includes(pref))
+        if (wants)
             s += 40;
-        if (notMusic.test(id))
+        // A messenger sits below every player that is not one, playing or paused. It plays what
+        // was said to the user, not a song, so it wins only when it is all there is; the -70 it
+        // used to take was beaten by its own playback (+100) against a paused song (+25). Asking
+        // for it by name (preferPlayer) or by hand (`pinned`) is the explicit override.
+        if (messengers.test(id)) {
+            if (!wants)
+                s -= 1000;
+        } else if (notMusic.test(id))
             s -= 70;
         else if (musicApps.test(id))
             s += 20;
@@ -148,7 +168,7 @@ Singleton {
     readonly property var notSong: /#\d|\b(?:ep|part|pt)\.?\s*\d|стрим|stream|обзор|review|гайд|guide|tutorial|туториал|trailer|трейлер|подкаст|podcast|прохождение|let'?s play|выпуск|episode|серия|часть|vlog|влог|reaction|реакция|новости|news|shorts/i
     function kindOf(p) {
         const id = (p.identity || "") + " " + (p.desktopEntry || "");
-        if (/discord|vesktop|telegram|signal|element|slack/i.test(id))
+        if (messengers.test(id))
             return "";
         if (!videoApps.test(id))
             return "music";
@@ -229,7 +249,11 @@ Singleton {
     property var _mem: ({})
     property string _pendingKey: ""
 
-    onTrackKeyChanged: fetchTimer.restart()
+    onTrackKeyChanged: {
+        // consent is for the track it was given on: the next one asks again
+        _consentKey = "";
+        fetchTimer.restart();
+    }
     // nobody sees a line: locked, or every screen that shows one is under a fullscreen window.
     // Every screen used to have to be: the owner's lyrics are on DP-1 only, HDMI-A-1 is never
     // fullscreen, so in CS2 the lines, lyrics-level.py and the bass cava ran for nobody (16.10)
@@ -390,10 +414,13 @@ Singleton {
             updateIndex();
     }
 
-    // bypass caches (memory + disk) for the current track
+    // bypass caches (memory + disk) for the current track. This is also the user asking for the
+    // network on a track that would not get it by itself: a messenger's voice message. The
+    // consent holds for that one track (`netBlocked`), not for the next message.
     function refetch() {
         if (!title)
             return;
+        _consentKey = trackKey;
         delete _mem[trackKey];
         lines = [];
         index = -1;
@@ -463,6 +490,10 @@ Singleton {
 
     function store(key, data) {
         _mem[key] = data;
+        // no cache file for a messenger's track: its name is the sender's name and the message's
+        // time, and the text is not a song's. The session keeps it, the disk does not.
+        if (netBlocked)
+            return;
         _diskQueue.push({
             "path": cacheFile(key),
             "text": JSON.stringify(data)
@@ -505,6 +536,16 @@ Singleton {
     readonly property var cleaned: clean(title, artist)
     readonly property var allSources: ["local", "player", "lrclib", "amll", "netease", "kugou", "qq", "lrccx", "musixmatch", "ovh"]
     readonly property var sources: Lib.Config.lyrics.sources && Lib.Config.lyrics.sources.length ? Lib.Config.lyrics.sources : allSources
+
+    // ---- what may leave the machine ----
+    // A messenger publishes what was said into it, not a song (see `messengers` above). Those
+    // names and times must not reach a lyrics search service by themselves, so for such a player
+    // the chain reads local files and the player's own text and stops there; the network is
+    // asked only when the user asks for it — the player card's «Search lyrics» (refetch), which
+    // holds for that one track (`_consentKey`), or the searchInMessengers setting.
+    readonly property bool messenger: isMessenger(player)
+    property string _consentKey: ""     // the track the user asked to search for by hand
+    readonly property bool netBlocked: messenger && _consentKey !== trackKey && Lib.Config.lyrics.searchInMessengers !== true
 
     // "Artist - Song (Official Video) [4K]" from a browser or YouTube → {artist, title}
     function clean(t, a) {
@@ -651,7 +692,8 @@ Singleton {
     // NetEase keeps them for many songs (YRC: popular ones, foreign mostly); looked for once a song
     // (`wordsTried` in its cache file), the lyrics replaced when they are there
     function wordsUpgrade(key, data) {
-        if (Lib.Config.lyrics.byWord === false || !data || !data.syncedLyrics || data.wordsTried || data.source === "local" || /<\d+:\d+/.test(data.syncedLyrics))
+        // another NetEase round trip: never for a track that may not leave the machine
+        if (netBlocked || Lib.Config.lyrics.byWord === false || !data || !data.syncedLyrics || data.wordsTried || data.source === "local" || /<\d+:\d+/.test(data.syncedLyrics))
             return;
         const c = cleaned, d = length;
         const tried = () => {
@@ -900,6 +942,9 @@ Singleton {
     }
     function fetchNet(key) {
         const d = length;
+        // a messenger's metadata stays on the machine unless the user asked (netBlocked): only the
+        // sources that read the disk and the player's own metadata are left
+        const order = netBlocked ? sources.filter(s => s === "local" || s === "player") : sources;
         const steps = [];
         let plain = null;  // best unsynced text of the right song met on the way
         let stepId = 0;
@@ -1154,13 +1199,13 @@ Singleton {
             return steps;
         };
         const first = build(cleaned, false);
-        for (const src of sources)
+        for (const src of order)
             if (first[src])
                 steps.push(...[].concat(first[src]));
         const alt = fallback;
         if (alt) {
             const second = build(alt, true);
-            for (const src of sources)
+            for (const src of order)
                 if (["lrclib", "netease", "lrccx", "kugou"].includes(src))
                     steps.push(...[].concat(second[src]));
         }

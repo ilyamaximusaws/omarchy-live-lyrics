@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "angelos.lyrics",
   "name": "Live Lyrics",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Iliya Brook",
   "license": "MIT",
   "repository": "https://github.com/ilyamaximusaws/omarchy-live-lyrics",
@@ -28,6 +28,7 @@
       "fallbackTitle": true,
       "glow": "level",
       "preferPlayer": "",
+      "searchInMessengers": false,
       "artwork": "cover",
       "opacity": 100,
       "maxWidth": 500
@@ -68,6 +69,13 @@
         "label": "Preferred MPRIS player",
         "description": "Substring of player identity/desktop name to prefer.",
         "defaultValue": ""
+      },
+      {
+        "key": "searchInMessengers",
+        "type": "boolean",
+        "label": "Search lyrics for messenger messages",
+        "description": "Messengers (Telegram, Discord, …) publish voice messages over MPRIS with the sender's name and the time as the 'artist' and 'title'. Off: those are looked up in local files only, and online only when you press Search in the player card. On: every such message is searched online automatically.",
+        "defaultValue": false
       },
       {
         "key": "artwork",

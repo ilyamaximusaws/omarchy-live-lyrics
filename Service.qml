@@ -26,6 +26,7 @@ Item {
         if (settings.onBeat !== undefined) patch.onBeat = settings.onBeat
         if (settings.glow !== undefined) patch.glow = settings.glow
         if (settings.preferPlayer !== undefined) patch.preferPlayer = settings.preferPlayer
+        if (settings.searchInMessengers !== undefined) patch.searchInMessengers = settings.searchInMessengers
         Lib.Config.setLyrics(patch)
     }
 
@@ -64,6 +65,12 @@ Item {
 
         function ping(): string {
             return "pong";
+        }
+
+        // the user asking for the network on a track that does not get it by itself
+        function search(): string {
+            Lib.Lyrics.refetch();
+            return Lib.Lyrics.status;
         }
     }
 }

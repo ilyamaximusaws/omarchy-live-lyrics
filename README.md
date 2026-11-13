@@ -76,9 +76,22 @@ Set through the shell's plugin settings (they live in your
 | `opacity` | `100` | how solid the line sits in the bar, 20–100 |
 | `maxWidth` | `500` | widest a line may get before it glides |
 | `preferPlayer` | — | substring of the player to prefer when several are running |
+| `searchInMessengers` | `false` | search a messenger's voice messages online too, without asking per message |
 
 `opacity` also has a slider in the player card (the gear in its transport row);
 the drag previews live and only the release is saved.
+
+### Messengers and voice messages
+
+Messengers publish their voice messages over MPRIS too: the "artist" the shell
+sees is the sender's name and the "title" the time the message was sent. Live
+Lyrics never sends those to a lyrics service on its own — for a player that is a
+messenger (Telegram, Discord, Signal, Element, Slack, WhatsApp, Threema, Skype,
+Teams, Zoom), the lookup stops at files next to the track and the player's own
+embedded lyrics, and nothing is written to the cache. If you actually want the
+web searched for such a message, click the line to open the player card and
+press its search button (it holds for that one message), or switch on the
+`searchInMessengers` setting to do it automatically for every message.
 
 ## Click actions on the line
 

@@ -31,6 +31,9 @@ Singleton {
         "glowRodeMax": 0.8,
         "glowTap": "main",
         "preferPlayer": "",
+        // a messenger's voice message is not a song: its metadata goes to the lyrics services
+        // only at the user's request (the player card's «Search lyrics»), unless this is on
+        "searchInMessengers": false,
         "artwork": "cover",         // note | cover: what sits left of the line
         "offsetMs": 0,
         "wordLeadMs": 150,

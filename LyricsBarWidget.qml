@@ -35,6 +35,8 @@ BarWidget {
     readonly property bool onBeat: setting("onBeat", true)
     readonly property string glowMode: setting("glow", "level")
     readonly property string prefer: setting("preferPlayer", "")
+    // search the web for a messenger's voice message too, without being asked each time
+    readonly property bool messengerSearch: setting("searchInMessengers", false)
     // how wide the line may get before it has to glide (angelOS: Theme.u * 250,
     // one art pixel = 2 screen px)
     readonly property int maxWidth: setting("maxWidth", 500)
@@ -46,15 +48,17 @@ BarWidget {
             "byWord": byWord,
             "onBeat": onBeat,
             "glow": glowMode,
-            "preferPlayer": prefer
+            "preferPlayer": prefer,
+            "searchInMessengers": messengerSearch
         })
         if (svc && typeof svc.updateConfig === "function")
-            svc.updateConfig({ "byWord": byWord, "onBeat": onBeat, "glow": glowMode, "preferPlayer": prefer })
+            svc.updateConfig({ "byWord": byWord, "onBeat": onBeat, "glow": glowMode, "preferPlayer": prefer, "searchInMessengers": messengerSearch })
     }
     onByWordChanged: pushSettings()
     onOnBeatChanged: pushSettings()
     onGlowModeChanged: pushSettings()
     onPreferChanged: pushSettings()
+    onMessengerSearchChanged: pushSettings()
     Component.onCompleted: {
         pushSettings()
         shown = line
@@ -566,6 +570,39 @@ BarWidget {
                     verticalPadding: Style.spacing.controlPaddingY
                     selected: root.settingsOpen
                     onClicked: root.settingsOpen = !root.settingsOpen
+                }
+            }
+
+            // ---- a messenger's voice message: search only when asked ----
+            // Its MPRIS "artist" is the sender's name and its "title" the time it was sent, so
+            // the engine keeps those off the lyrics services by itself. This is the one action
+            // that sends them, and it holds for this track only.
+            Row {
+                width: parent.width
+                height: Math.max(searchHint.implicitHeight, searchButton.implicitHeight)
+                spacing: Style.space(6)
+                visible: root.lyr.netBlocked === true && root.lyr.playing === true
+
+                Text {
+                    id: searchHint
+                    width: parent.width - searchButton.width - Style.space(6)
+                    anchors.verticalCenter: parent.verticalCenter
+                    textFormat: Text.PlainText
+                    text: "Search this message's lyrics online?"
+                    color: Qt.darker(root.tint, 1.3)
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.bodySmall
+                    elide: Text.ElideRight
+                }
+
+                Button {
+                    id: searchButton
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconText: "󰍉"
+                    foreground: root.tint
+                    horizontalPadding: Style.spacing.controlPaddingX
+                    verticalPadding: Style.spacing.controlPaddingY
+                    onClicked: root.lyr.refetch()
                 }
             }
 
